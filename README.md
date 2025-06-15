@@ -7,7 +7,7 @@ This project implements a fully functional agentic AI system using LangChain and
 
 ## Features
 
-- **Local LLM Integration**: Uses Ollama to run various open-source models (Mistral, LLaMA 3, Gemma)
+- **Local LLM Integration**: Uses Ollama to run various open-source models (Mistral, LLaMA3.2, Gemma)
 - **Multi-Tool Integration**:
   - 🔍 Web Search (DuckDuckGo)
   - 🧮 Calculator (LLMMathChain)
@@ -26,7 +26,7 @@ This project implements a fully functional agentic AI system using LangChain and
 
 - Python 3.9+
 - [Ollama](https://ollama.ai/) installed and running
-- At least one LLM model downloaded (e.g., `ollama pull mistral`)
+- At least one LLM model downloaded (e.g., `ollama pull llama3.2`)
 - Git (for cloning the repository)
 - pip (Python package manager)
 
@@ -50,17 +50,17 @@ This project implements a fully functional agentic AI system using LangChain and
 
 3. **Install dependencies:**
    ```bash
-   pip install -r requirements.txt
+   py -m pip install -r requirements.txt
    ```
 
 4. **Download a model (if not already done):**
    ```bash
-   ollama pull mistral  # or any other supported model
+   ollama pull llama3.2  # or any other supported model
    ```
 
 5. **Run the application:**
    ```bash
-   streamlit run app.py
+   py -m streamlit run main_agent.py
    ```
    The app will be available at `http://localhost:8501`
 
@@ -116,11 +116,11 @@ graph LR
 
 ### Model Selection
 
-Change the default model in the Streamlit UI sidebar or modify `app.py`:
+Change the default model in the Streamlit UI sidebar or modify `main_agent.py`:
 
 ```python
 llm = ChatOllama(
-    model="mistral",  # Change to your preferred model
+    model="llama3.2",  # Change to your preferred model
     temperature=0.2,  # Adjust creativity (0.0 to 1.0)
     num_ctx=2048,    # Context window size
     num_gpu_layers=0, # GPU layers (if available)
@@ -135,9 +135,8 @@ llm = ChatOllama(
 
 Any model supported by Ollama can be used. Popular choices include:
 - `mistral` - Good balance of speed and quality
-- `llama3` - Meta's latest model
+- `llama3.2` - Meta's latest model
 - `gemma` - Google's lightweight model
-- `mixtral` - Mixture of Experts model
 
 List available models:
 ```bash
@@ -146,7 +145,7 @@ ollama list
 
 ### Memory Configuration
 
-Adjust memory settings in the Streamlit UI or modify `app.py`:
+Adjust memory settings in the Streamlit UI or modify `main_agent.py`:
 - **Memory Window**: Number of recent messages to remember
 - **Temperature**: Controls response randomness (0.0 to 1.0)
 
@@ -209,7 +208,7 @@ If you encounter issues:
 
 ```
 langchain-agent/
-├── app.py              # Main application code
+├── main_agent.py              # Main application code
 ├── requirements.txt    # Python dependencies
 ├── README.md          # This file
 └── .gitignore         # Git ignore file
@@ -217,7 +216,7 @@ langchain-agent/
 
 ### Key Components
 
-1. **app.py**
+1. **main_agent.py**
    - Main Streamlit application
    - Agent initialization and configuration
    - UI components and event handling
@@ -236,7 +235,7 @@ langchain-agent/
 pip install -r requirements.txt
 
 # Run the application
-streamlit run app.py
+py -m streamlit run main_agent.py
 ```
 
 ### Production Deployment
