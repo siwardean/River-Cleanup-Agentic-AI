@@ -171,6 +171,10 @@ The agent has been tested with various queries including:
 - Accuracy: High for factual queries with web search
 - Limitations: May struggle with very recent events or specialized knowledge
 
+## Sample ScreenShots
+![AI_Agent_Code](https://github.com/user-attachments/assets/c7412f60-d893-4e12-87bc-998dbd8bb8cc)
+![AI_Agent_Console](https://github.com/user-attachments/assets/7af1d878-f45f-4e7a-b478-7ab6a9d911bc)
+
 ## 🐛 Known Issues & Limitations
 
 - First response might be slow as the model warms up
