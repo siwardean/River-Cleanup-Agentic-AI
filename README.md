@@ -1,6 +1,3 @@
-# Agentic-AI
-🤖 Local-first AI assistant built with Streamlit, LangChain, and Ollama. Supports search, Python code execution, model switching (Mistral, LLaMA3, Gemma), memory window config, and privacy-first local processing. UI is simple, responsive, and chat-based.
-
 # Task-Oriented AI Agent with LangChain and Ollama
 
 This project implements a fully functional agentic AI system using LangChain and Ollama. It's designed to solve user-defined tasks through multi-step reasoning, tool usage, and memory management, all powered by local LLMs.
@@ -111,6 +108,127 @@ graph LR
   - FAISS vector store for persistent memory
   - Stores and retrieves relevant past interactions
   - Uses sentence-transformers for embeddings
+
+## 🧠 Implementation Deep Dive
+
+### 1. Core Architecture
+
+#### Reasoning Engine
+- **Base Model**: Uses Ollama with LLaMA 3.2 as the default LLM
+- **Agent Type**: `CONVERSATIONAL_REACT_DESCRIPTION` for natural conversation flow
+- **Memory**: Sliding window conversation memory (default: 5 messages)
+- **Temperature**: 0.2 (balanced between creativity and focus)
+
+#### Key Components
+```mermaid
+graph TD
+    A[User Input] --> B[Agent]
+    B --> C{Decision}
+    C -->|Needs Search| D[Web Search]
+    C -->|Needs Math| E[Calculator]
+    C -->|Needs Code| F[Python REPL]
+    D --> B
+    E --> B
+    F --> B
+    B --> G[Formatted Response]
+```
+
+### 2. Prompt Design
+
+#### System Prompt
+The agent uses an implicit system prompt that:
+1. Establishes the assistant's helpful, precise personality
+2. Sets context awareness
+3. Defines tool usage guidelines
+
+#### Dynamic Prompting
+- **Context Window**: 2048 tokens
+- **Message Format**:
+  ```python
+  [
+      {"role": "system", "content": "You are a helpful assistant..."},
+      {"role": "user", "content": "What's 2+2?"},
+      {"role": "assistant", "content": "4", "tool_calls": [...]}
+  ]
+  ```
+
+### 3. Tool Integration
+
+#### Web Search
+- **Tool**: DuckDuckGo Search
+- **Use Case**: Current events, general knowledge
+- **Safety**: No API key required, rate-limited by default
+
+#### Calculator
+- **Implementation**: `LLMMathChain` for safe math evaluation
+- **Capabilities**:
+  - Basic arithmetic
+  - Advanced functions (sqrt, sin, cos, etc.)
+  - Unit conversions
+
+#### Python REPL
+- **Features**:
+  - Full Python 3 execution
+  - Sandboxed environment
+  - Timeout protection
+- **Safety**:
+  - Blocks dangerous imports
+  - Limited execution time
+  - Memory constraints
+
+### 4. Memory System
+
+#### Short-term Memory
+- **Type**: Sliding window buffer
+- **Size**: Configurable (default: 5 messages)
+- **Purpose**: Maintains conversation context
+
+#### Implementation
+```python
+memory = ConversationBufferWindowMemory(
+    memory_key="chat_history",
+    k=5,  # Number of messages to remember
+    return_messages=True,
+    output_key="output"
+)
+```
+
+### 5. Error Handling
+
+#### Graceful Degradation
+1. **Model Failures**: Falls back to simple responses
+2. **Tool Errors**: Provides user-friendly error messages
+3. **Rate Limiting**: Implements exponential backoff
+
+#### Debug Mode
+- Toggle in UI
+- Shows detailed error logs
+- Displays intermediate reasoning steps
+
+### 6. Performance Considerations
+
+#### Optimization
+- **Caching**: LLM responses are cached
+- **Batching**: Multiple tool calls in parallel
+- **Streaming**: Real-time response generation
+
+#### Limitations
+- Context window constraints
+- No long-term persistence by default
+- Limited to available system resources
+
+### 7. Security
+
+#### Measures
+1. Input sanitization
+2. Restricted Python execution
+3. No persistent storage of sensitive data
+4. Rate limiting on API calls
+
+#### Best Practices
+- Environment variables for configuration
+- Minimal required permissions
+- Regular dependency updates
 
 ## ⚙️ Configuration
 
