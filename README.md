@@ -179,16 +179,16 @@ The agent has been tested with various queries including:
 - Console Layout
 ![AI_Agent_Console](https://github.com/user-attachments/assets/7af1d878-f45f-4e7a-b478-7ab6a9d911bc)
 
--- Interface Layout
+- Interface Layout
 ![AI_Agent_Display](https://github.com/user-attachments/assets/c4636a4f-0698-4b9a-95af-f6e9f669a59a)
 
--- Code Genration
+- Code Genration
 ![AI_Agent_Code](https://github.com/user-attachments/assets/c7412f60-d893-4e12-87bc-998dbd8bb8cc)
 
--- Mathematics Solver
+- Mathematics Solver
 ![AI_Agent_Mathematical_Calculation](https://github.com/user-attachments/assets/d2bbc2c1-e932-4748-8f0f-2c602fb25139)
 
--- Quick Response
+- Quick Response
 ![AI_Agent_Response](https://github.com/user-attachments/assets/7b003202-a273-46f4-86eb-706b54b58d66)
 
 
