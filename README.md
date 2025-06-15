@@ -174,6 +174,9 @@ The agent has been tested with various queries including:
 ## Sample ScreenShots
 ![AI_Agent_Code](https://github.com/user-attachments/assets/c7412f60-d893-4e12-87bc-998dbd8bb8cc)
 ![AI_Agent_Console](https://github.com/user-attachments/assets/7af1d878-f45f-4e7a-b478-7ab6a9d911bc)
+![AI_Agent_Display](https://github.com/user-attachments/assets/c4636a4f-0698-4b9a-95af-f6e9f669a59a)
+![AI_Agent_Mathematical_Calculation](https://github.com/user-attachments/assets/d2bbc2c1-e932-4748-8f0f-2c602fb25139)
+![Uploading AI_Agent_Response.png…]()
 
 ## 🐛 Known Issues & Limitations
 
