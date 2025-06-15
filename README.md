@@ -171,8 +171,6 @@ The agent has been tested with various queries including:
 - Accuracy: High for factual queries with web search
 - Limitations: May struggle with very recent events or specialized knowledge
 
-## Sample ScreenShots
-
 ## 📸 Sample Screenshots
 
 | About | Console Layout |
