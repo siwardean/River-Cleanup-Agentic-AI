@@ -172,11 +172,26 @@ The agent has been tested with various queries including:
 - Limitations: May struggle with very recent events or specialized knowledge
 
 ## Sample ScreenShots
-![AI_Agent_Code](https://github.com/user-attachments/assets/c7412f60-d893-4e12-87bc-998dbd8bb8cc)
+
+- About 
+![AI_Agent_About](https://github.com/user-attachments/assets/7e44d295-27d4-4b2d-b0b6-04499d507d4b)
+
+- Console Layout
 ![AI_Agent_Console](https://github.com/user-attachments/assets/7af1d878-f45f-4e7a-b478-7ab6a9d911bc)
+
+-- Interface Layout
 ![AI_Agent_Display](https://github.com/user-attachments/assets/c4636a4f-0698-4b9a-95af-f6e9f669a59a)
+
+-- Code Genration
+![AI_Agent_Code](https://github.com/user-attachments/assets/c7412f60-d893-4e12-87bc-998dbd8bb8cc)
+
+-- Mathematics Solver
 ![AI_Agent_Mathematical_Calculation](https://github.com/user-attachments/assets/d2bbc2c1-e932-4748-8f0f-2c602fb25139)
-![Uploading AI_Agent_Response.png…]()
+
+-- Quick Response
+![AI_Agent_Response](https://github.com/user-attachments/assets/7b003202-a273-46f4-86eb-706b54b58d66)
+
+
 
 ## 🐛 Known Issues & Limitations
 
