@@ -4,3 +4,5 @@
 !requirements.txt
 !Images_Recog_Model.pt
 !Drone_Model.pt
+!Images_General_Predict.py
+!Images_Recog_Model.pt
