@@ -4,7 +4,7 @@ This project implements a functional agentic AI system using LangChain and Ollam
 
 ---
 
-## 🚀 Features
+## Features
 
 - **Local LLMs via Ollama**  
   Supports Mistral, LLaMA 3.2, Gemma, etc.
@@ -17,7 +17,7 @@ This project implements a functional agentic AI system using LangChain and Ollam
 
 ---
 
-## 🖼️ Object Detection Models
+## Object Detection Models
 
 This project also includes two image recognition models with separate `predict.py` scripts:
 
@@ -30,3 +30,38 @@ Each model has its own `predict.py` script for inference:
 ```bash
 Drone_Predict.py
 Images_General_Predict.py
+
+## Quick Start
+
+# 1. Clone the repo
+git clone https://github.com/yourusername/langchain-agent.git
+cd langchain-agent
+
+# 2. Set up environment
+python -m venv venv
+# Windows
+venv\Scripts\activate
+# macOS/Linux
+source venv/bin/activate
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Download a model
+ollama pull llama3.2
+
+# 5. Run the app
+streamlit run main_agent.py
+
+## Structure
+
+langchain-agent/
+├── main_agent.py          # Main Streamlit app
+├── requirements.txt       # Python dependencies
+├── Drone_Model/           # High-accuracy drone-only model
+│   └── predict.py
+├── Images_Recog/          # General-purpose, multi-object model
+│   └── predict.py
+├── README.md
+└── .gitignore
+
