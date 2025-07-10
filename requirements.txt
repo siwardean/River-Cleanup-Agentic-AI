@@ -13,3 +13,4 @@ streamlit-extras>=0.3.0
 # Tools & Utilities
 duckduckgo-search>=3.9.4
 pydantic>=1.10.22
+numexpr>=2.11.0
