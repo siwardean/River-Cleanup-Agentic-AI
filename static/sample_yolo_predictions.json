@@ -1,0 +1,8 @@
+{
+  "detections": [
+    {"label": "Plastic bottle", "confidence": 0.84},
+    {"label": "Plastic bag", "confidence": 0.92},
+    {"label": "Plastic bag", "confidence": 0.81},
+    {"label": "Plastic", "confidence": 0.92}
+  ]
+}

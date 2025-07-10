@@ -11,3 +11,16 @@ streamlit-extras>=0.3.0
 
 # Tools & Utilities
 duckduckgo-search>=3.9.4
+
+openai
+faiss-cpu
+scikit-learn
+numpy
+httpx
+streamlit
+pillow
+numpy
+torch
+ultralytics  # Optional: YOLOv9 model runner (if using Ultralytics)
+python-dotenv
+
