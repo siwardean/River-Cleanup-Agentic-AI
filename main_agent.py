@@ -376,14 +376,7 @@ def render_vision_agent_ui():
             with st.spinner("Analyzing image..."):
                 try:
                     # Step 1: Run preprocessing or prediction tool first
-                    prediction = run_prediction_tool(image_path)
-
-                    if not prediction.get("success"):
-                        st.error(prediction.get("error", "❌ Unknown error during prediction."))
-                        return
-
-                    st.markdown(f"**Model Used**: {prediction['model']}")
-                    st.image(prediction["annotated_image_path"], caption="Annotated Prediction", use_column_width=True)
+                    run_prediction_tool(image_path)
 
                     # Step 2: Then run image interpretation using GPT-4o
                     result = image_interpretation_tool(image_path)
