@@ -116,6 +116,37 @@ def create_embedding_agent():
         openai_api_version=st.secrets["AZURE_OPENAI_API_VERSION"]
     )
 
+# --- Vision Agent Tool: Analyze image for waste with bounding boxes ---
+def vision_agent_tool(image_path: str) -> str:
+    """Send image to GPT-4o vision endpoint and return JSON with bounding boxes of waste."""
+    with open(image_path, "rb") as f:
+        image_data = base64.b64encode(f.read()).decode("utf-8")
+
+    headers = {
+        "Content-Type": "application/json",
+        "api-key": st.secrets["AZURE_OPENAI_API_KEY"]
+    }
+    endpoint = f"{st.secrets['AZURE_OPENAI_ENDPOINT']}openai/deployments/{st.secrets['AZURE_OPENAI_DEPLOYMENT_GPT4O']}/chat/completions?api-version={st.secrets['AZURE_OPENAI_API_VERSION']}"
+
+    data = {
+        "messages": [
+            {"role": "system", "content": "You are a vision model that detects waste and returns JSON bounding boxes."},
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "Detect all visible waste in this image and return their bounding boxes in JSON."},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_data}"}}
+                ]
+            }
+        ],
+        "max_tokens": 1000,
+    }
+
+    response = requests.post(endpoint, headers=headers, json=data)
+    response.raise_for_status()
+    result = response.json()
+    return result['choices'][0]['message']['content']
+
 # --- Tools: GPT Math, Python, Search, Agent Placeholders ---
 def create_tools(llm):
     """Set up the tools that the AI assistant can use."""
@@ -141,8 +172,8 @@ def create_tools(llm):
         ),
         Tool(
             name="vision_agent",
-            func=lambda x: "Vision analysis coming soon.",
-            description="Analyze images for pollution patterns or visual waste detection."
+            func=vision_agent_tool,
+            description="Analyze an image file to detect visible waste and return bounding box JSON."
         ),
         Tool(
             name="metadata_agent",
