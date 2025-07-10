@@ -14,8 +14,7 @@ import uuid
 import shutil
 import base64
 import requests
-import tempfile
-
+from predict import run_predict  # Importing the predict function from predict.py
 # Third-party imports
 import streamlit as st
 from streamlit_chat import message as st_message
@@ -154,17 +153,7 @@ def run_prediction_tool(input_text: str) -> str:
         os.makedirs(output_dir, exist_ok=True)
 
         # --- Run model ---
-        result = subprocess.run(
-            [
-                "python", "predict.py",
-                "--img_path", image_path,
-                "--model_path", model_path,
-                "--output_dir", output_dir
-            ],
-            capture_output=True,
-            text=True,
-            timeout=60
-        )
+        result = run_predict(model_path=model_path)
 
         if result.returncode != 0:
             return f"❌ Error in prediction:\n{result.stderr.strip()}"
@@ -370,7 +359,7 @@ def render_vision_agent_ui():
         with open(image_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
 
-        st.image(image_path, caption="Uploaded Image", use_column_width=True)
+        st.image(image_path, caption="Uploaded Image", use_container_width=True)
 
         if st.button("🔍 Analyze Image for Waste"):
             with st.spinner("Analyzing image..."):
@@ -488,8 +477,6 @@ def format_agent_output(output: str) -> str:
     """
     if not output:
         return ""
-        
-    # Simple formatting for better readability
     formatted = []
     in_code_block = False
     
@@ -522,7 +509,7 @@ def process_agent_response(response: Dict[str, Any]) -> str:
     response = response.replace('```json', '```')
     
     # Add basic formatting for better readability
-    response = response.replace('\n', '  \n') 
+    response = response.replace('\n', '  \n')
     return format_agent_output(response)
 
 def render_chat():
@@ -566,11 +553,9 @@ def render_chat():
                 
                 # Stream the response
                 for chunk in st.session_state.agent_chain.stream({"input": prompt}):
-                    if chunk:
-                        chunk_text = process_agent_response(chunk)
-                        if chunk_text:
-                            full_response = chunk_text
-                            response_container.markdown(full_response, unsafe_allow_html=True)
+                    piece = chunk.get("text") or chunk.get("output") or str(chunk)
+                    full_response += piece
+                    response_container.markdown(full_response, unsafe_allow_html=True)
                 
                 # Add final response to chat history
                 messages.append({"role": "assistant", "content": full_response})
