@@ -6,6 +6,7 @@
 # Standard library imports
 import time
 import json
+import logging
 from typing import Dict, List, Any, Optional
 
 # Third-party imports
@@ -15,11 +16,15 @@ from streamlit_extras.stylable_container import stylable_container
 
 # LangChain imports
 from langchain_ollama import ChatOllama
+from langchain_openai import AzureChatOpenAI
+from langchain_community.embeddings import AzureOpenAIEmbeddings
 from langchain.agents import AgentType, initialize_agent, Tool
 from langchain.memory import ConversationBufferWindowMemory
 from langchain_community.tools import DuckDuckGoSearchRun
 from langchain_experimental.tools import PythonREPLTool
-from langchain.chains import LLMMathChain
+from langchain.chains.llm_math.base import LLMMathChain
+
+logger = logging.getLogger(__name__)
 
 # --- App Configuration ---
 # Set up the page with a title and icon
@@ -93,131 +98,106 @@ def load_css():
     """
     st.markdown(custom_css, unsafe_allow_html=True)
 
-# --- LLM Initialization ---
 def create_llm():
-    """Create and configure the language model.
-    
-    Returns:
-        ChatOllama: Configured language model instance
-    """
-    # Using the settings from session state which can be modified in the UI
-    llm_config = {
-        'model': st.session_state.get('model', 'llama3.2'),  # Default to llama3.2 if not set
-        'temperature': st.session_state.get('temperature', 0.2),  # Default temperature
-        'num_ctx': 2048,  # Context window size
-        'num_gpu_layers': 0,  # No GPU layers by default
-        'num_thread': 4,  # Number of CPU threads to use
-        'top_k': 40,  # Top-k sampling
-        'top_p': 0.9,  # Nucleus sampling
-        'repeat_penalty': 1.1  # Penalty for repeating tokens
-    }
-    
-    # Add some debug output
-    if 'debug' in st.session_state and st.session_state.debug:
-        st.sidebar.json(llm_config)
-    
-    return ChatOllama(**llm_config)
+    """Create and configure the Azure OpenAI GPT-4o model."""
+    return AzureChatOpenAI(
+        openai_api_base=st.secrets["AZURE_OPENAI_ENDPOINT"],
+        openai_api_key=st.secrets["AZURE_OPENAI_API_KEY"],
+        deployment_name=st.secrets["AZURE_OPENAI_DEPLOYMENT_GPT4O"],
+        openai_api_version=st.secrets["AZURE_OPENAI_API_VERSION"],
+        temperature=st.session_state.get('temperature', 0.2),
+    )
 
+def create_embedding_agent():
+    return AzureOpenAIEmbeddings(
+        deployment=st.secrets["AZURE_OPENAI_DEPLOYMENT_EMBEDDING"],
+        openai_api_key=st.secrets["AZURE_OPENAI_API_KEY"],
+        openai_api_base=st.secrets["AZURE_OPENAI_ENDPOINT"],
+        openai_api_version=st.secrets["AZURE_OPENAI_API_VERSION"]
+    )
+
+# --- Tools: GPT Math, Python, Search, Agent Placeholders ---
 def create_tools(llm):
-    """Set up the tools that our AI assistant can use.
-    
-    Args:
-        llm: The language model instance
-        
-    Returns:
-        list: List of configured tools
-    """
-    # Initialize search tool (DuckDuckGo doesn't need an API key which is nice)
+    """Set up the tools that the AI assistant can use."""
     search_tool = DuckDuckGoSearchRun()
-    
-    # Set up the Python REPL tool with some safety restrictions
     python_repl = PythonREPLTool()
-    
-    # Math tool for calculations
-    # Using LLMMathChain which is better than simple eval()
     calculator = LLMMathChain.from_llm(llm=llm)
-    
-    # Define our tools with clear descriptions
+
     tools = [
         Tool(
             name="web_search",
             func=search_tool.run,
-            description=(
-                "Use this when you need to look up current information "
-                "or answer questions about recent events. Input should be a clear search query."
-            ),
-            return_direct=True
+            description="Use this to search the web for current information."
         ),
         Tool(
             name="calculator",
             func=calculator.run,
-            description=(
-                "Useful for math problems and calculations. "
-                "Input should be a mathematical expression like '2 + 2' or 'sqrt(25)'."
-            ),
-            return_direct=True
+            description="Use this to solve math problems and calculations."
         ),
         Tool(
             name="python_repl",
             func=python_repl.run,
-            description=(
-                "A Python REPL for executing Python code. "
-                "Only use this for tasks that require actual programming. "
-                "Input should be valid Python code. "
-                "WARNING: Be careful with this tool as it can execute arbitrary code."
-            ),
-            return_direct=True
+            description="Use this to execute Python code for advanced logic or data tasks."
+        ),
+        Tool(
+            name="vision_agent",
+            func=lambda x: "Vision analysis coming soon.",
+            description="Analyze images for pollution patterns or visual waste detection."
+        ),
+        Tool(
+            name="metadata_agent",
+            func=lambda x: "Metadata processing agent is not yet implemented.",
+            description="Normalize and preprocess public structured river data."
+        ),
+        Tool(
+            name="transferability_agent",
+            func=lambda x: "Transferability evaluator is under development.",
+            description="Assess model performance generalization from River A to B."
         )
     ]
-    
+
     return tools
 
+# --- Agent: Main LLM Agent Setup ---
 def create_agent():
-    """Create and configure the main agent with memory and tools.
-    
-    This is where we bring everything together - the LLM, tools, and memory.
-    """
-    with st.spinner("🤖 Setting up your AI assistant..."):
+    """Create the main LangChain agent using GPT-4o and tools."""
+    with st.spinner("🤖 Setting up your GPT-4o agent..."):
         try:
-            # First, create our language model
+            logger.info("Initializing agent with tools and memory...")
             llm = create_llm()
-            
-            # Then set up the tools it can use
             tools = create_tools(llm)
-            
-            # Configure memory - using a sliding window to keep context manageable
             memory = ConversationBufferWindowMemory(
-                memory_key="chat_history",  # Key for storing messages
-                k=st.session_state.get('memory_window', 5),  # Number of messages to remember
-                return_messages=True,  # Return message objects instead of strings
-                output_key="output",  # Key for the agent's output
+                memory_key="chat_history",
+                k=st.session_state.get('memory_window', 5),
+                return_messages=True,
+                output_key="output",
             )
-            
-            # Initialize the agent with our tools and memory
+            logger.info("Tools and memory initialized successfully.")
+            logger.info("Agent initialized successfully.")
             agent = initialize_agent(
-                tools=tools, 
+                tools=tools,
                 llm=llm,
-                agent=AgentType.CONVERSATIONAL_REACT_DESCRIPTION,  # Good for back-and-forth chats
-                verbose=st.session_state.get('debug', False),  # Only show debug info if enabled
+                agent=AgentType.CONVERSATIONAL_REACT_DESCRIPTION,
+                verbose=st.session_state.get('debug', False),
                 memory=memory,
-                handle_parsing_errors=True,  # Try to recover from parsing errors
-                max_iterations=5,  # Prevent infinite loops
-                early_stopping_method="generate",  # Fallback if max iterations reached
-                return_intermediate_steps=True  # Useful for debugging
+                handle_parsing_errors=True,
+                max_iterations=5,
+                early_stopping_method="generate",
+                return_intermediate_steps=True
             )
-            
+            logger.info("Agent initialized successfully.")
             return agent
-            
+
         except Exception as e:
-            # Log the actual error for debugging
             import traceback
             error_details = traceback.format_exc()
+            logger.error(f"Failed to initialize agent: {str(e)}")
+            logger.debug(f"Error details: {error_details}")
             if 'debug' in st.session_state and st.session_state.debug:
                 st.sidebar.error("Agent initialization failed:")
                 st.sidebar.code(error_details)
-                
-            st.error("😕 Oops! Something went wrong while setting up the AI. "
-                    "Try refreshing the page or check the logs if debug mode is on.")
+
+            st.error("😕 Failed to initialize the AI agent.")
             return None
 
 # --- Init Session State ---
@@ -229,7 +209,7 @@ def init_session_state():
         st.session_state.active_chat = chat_id
         st.session_state.chats[chat_id] = {"messages": [], "created_at": time.time(), "title": "New Chat"}
     if "model" not in st.session_state:
-        st.session_state.model = "mistral"
+        st.session_state.model = "gpt-4o"
     if "temperature" not in st.session_state:
         st.session_state.temperature = 0.2
     if "memory_window" not in st.session_state:
@@ -335,7 +315,7 @@ def render_sidebar():
 
         st.divider()
         st.subheader("⚙️ Settings")
-        model_options = ["mistral", "llama3", "gemma"]
+        model_options = ["gpt-4o", "text-embedding-3-large"]
         st.selectbox("Select Model", model_options, index=model_options.index(st.session_state.model), key="model")
         st.slider("Creativity (Temperature)", 0.0, 1.0, value=st.session_state.temperature, step=0.1, key="temperature")
         st.slider("Memory Window", 1, 10, value=st.session_state.memory_window, step=1, key="memory_window")
@@ -452,8 +432,8 @@ def display_about_section():
     """Display the about section in the sidebar."""
     with st.sidebar.expander("ℹ️ About"):
         st.markdown("""
-        **AI Assistant** can help you with:
-        - Answering questions using web search
+        **River AI Vision Assistant** can help you with:
+        - Analyzing 
         - Performing calculations
         - Executing Python code
         - Remembering context
@@ -483,6 +463,9 @@ def display_debug_info():
 
 def main():
     """Main application function."""
+
+    logging.basicConfig(filename='agnenticai.log', level=logging.DEBUG)
+
     # Initialize the app
     load_css()
     init_session_state()
