@@ -108,7 +108,7 @@ def load_css():
 def create_llm():
     """Create and configure the Azure OpenAI GPT-4o model."""
     return AzureChatOpenAI(
-        openai_api_base=st.secrets["AZURE_OPENAI_ENDPOINT"],
+        azure_endpoint=st.secrets["AZURE_OPENAI_ENDPOINT"],
         openai_api_key=st.secrets["AZURE_OPENAI_API_KEY"],
         deployment_name=st.secrets["AZURE_OPENAI_DEPLOYMENT_GPT4O"],
         openai_api_version=st.secrets["AZURE_OPENAI_API_VERSION"],
@@ -117,9 +117,9 @@ def create_llm():
 
 def create_embedding_agent():
     return AzureOpenAIEmbeddings(
-        deployment=st.secrets["AZURE_OPENAI_DEPLOYMENT_EMBEDDING"],
+        azure_endpoint=st.secrets["AZURE_OPENAI_ENDPOINT"],
         openai_api_key=st.secrets["AZURE_OPENAI_API_KEY"],
-        openai_api_base=st.secrets["AZURE_OPENAI_ENDPOINT"],
+        deployment=st.secrets["AZURE_OPENAI_DEPLOYMENT_EMBEDDING"],
         openai_api_version=st.secrets["AZURE_OPENAI_API_VERSION"]
     )
 
