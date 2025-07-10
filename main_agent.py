@@ -14,6 +14,7 @@ import uuid
 import shutil
 import base64
 import requests
+import tempfile
 
 # Third-party imports
 import streamlit as st
@@ -213,11 +214,11 @@ def image_interpretation_tool(input_text: str) -> str:
 
     data = {
         "messages": [
-            {"role": "system", "content": "You are a vision model that detects waste and returns JSON bounding boxes."},
+            {"role": "system", "content": "You are a vision model that detects waste and returns a JSON with a description of the detected waste and the bounding boxes location in pixel."},
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": "Detect all visible waste in this image and return their bounding boxes in JSON."},
+                    {"type": "text", "text": "Detect waste and returns a JSON with a description of the detected waste and the bounding boxes location in pixel."},
                     {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_data}"}}
                 ]
             }
@@ -354,6 +355,34 @@ def switch_chat(chat_id):
     """Switch to an existing chat."""
     if chat_id in st.session_state.chats:
         st.session_state.active_chat = chat_id
+
+def render_vision_agent_ui(): 
+    st.subheader("🖼️ Vision Agent – Detect Waste in Images")
+
+    uploaded_file = st.file_uploader("Upload an image of a river (JPG or PNG)", type=["jpg", "jpeg", "png"])
+
+    if uploaded_file is not None:
+        # Save to a temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp_file:
+            tmp_file.write(uploaded_file.getbuffer())
+            image_path = tmp_file.name
+
+        st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
+
+        if st.button("🔍 Analyze Image for Waste"):
+            with st.spinner("Analyzing image..."):
+                try:
+                    # Step 1: Run preprocessing or prediction tool first
+                    run_prediction_tool(image_path)
+
+                    # Step 2: Then run image interpretation using GPT-4o
+                    result = image_interpretation_tool(image_path)
+
+                    st.success("✅ Waste detection complete!")
+                    st.code(result, language="json")
+
+                except Exception as e:
+                    st.error(f"⚠️ Error during analysis: {e}")
 
 def render_sidebar():
     with st.sidebar:
@@ -603,6 +632,8 @@ def main():
     # Main chat interface
     with col1:
         render_chat()
+        st.markdown("---")
+        render_vision_agent_ui()  # 👈 Add here if you want it in main view
     
     # Sidebar
     with col2:
