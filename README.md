@@ -30,37 +30,66 @@ Each model has its own `predict.py` script for inference:
  - Drone_Predict.py
  - Images_General_Predict.py
 
-## Quick Start
+## 🚀 Quick Start
 
-# 1. Clone the repo
-git clone https://github.com/yourusername/langchain-agent.git
-cd langchain-agent
+### 1. Clone the Repository
 
-# 2. Set up environment
-python -m venv venv
-# Windows
-venv\Scripts\activate
-# macOS/Linux
-source venv/bin/activate
+Clone the repository and navigate to the project folder:
 
-# 3. Install dependencies
-pip install -r requirements.txt
+    git clone https://github.com/yourusername/langchain-agent.git
+    cd langchain-agent
 
-# 4. Download a model
-ollama pull llama3.2
+### 2. Set Up the Python Environment
 
-# 5. Run the app
-streamlit run main_agent.py
+Create a virtual environment:
 
-## Structure
+    python -m venv venv
 
-langchain-agent/
-├── main_agent.py          # Main Streamlit app
-├── requirements.txt       # Python dependencies
-├── Drone_Model/           # High-accuracy drone-only model
-│   └── predict.py
-├── Images_Recog/          # General-purpose, multi-object model
-│   └── predict.py
-├── README.md
-└── .gitignore
+Activate the environment:
+
+- On **Windows**:
+
+      venv\Scripts\activate
+
+- On **macOS/Linux**:
+
+      source venv/bin/activate
+
+### 3. Install Dependencies
+
+Install the required Python packages:
+
+    pip install -r requirements.txt
+
+### 4. Download a Model with Ollama
+
+Pull a supported local model (e.g., LLaMA 3.2):
+
+    ollama pull llama3.2
+
+Make sure the Ollama server is running:
+
+    ollama serve
+
+### 5. Run the Application
+
+Launch the Streamlit web interface:
+
+    streamlit run main_agent.py
+
+Open your browser and go to: [http://localhost:8501](http://localhost:8501)
+
+---
+
+## 📁 Project Structure
+
+    langchain-agent/
+    ├── main_agent.py          # Main Streamlit app (LLM agent)
+    ├── requirements.txt       # Python dependencies
+    ├── Drone_Model/           # High-accuracy, drone-specific model
+    │   └── predict.py         # Inference script
+    ├── Images_Recog/          # Multi-class, general image model
+    │   └── predict.py         # Inference script
+    ├── README.md              # Project documentation
+    └── .gitignore             # Git exclusions
 
