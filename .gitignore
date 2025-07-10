@@ -1,3 +1,4 @@
-*.log
-.streamlit/*
-__pycache__/
+*
+!main_agent.py
+!README.md
+!requirements.txt
