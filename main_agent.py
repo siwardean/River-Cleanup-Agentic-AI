@@ -140,6 +140,7 @@ def run_prediction_tool(input_text: str) -> str:
         if not image_name:
             return "❌ No image file (.jpg/.jpeg/.png) found in your input."
 
+        os.makedirs("input", exist_ok=True)
         image_path = os.path.join("input", image_name)
         if not os.path.exists(image_path):
             return f"❌ File not found: {image_path}"
@@ -362,22 +363,30 @@ def render_vision_agent_ui():
     uploaded_file = st.file_uploader("Upload an image of a river (JPG or PNG)", type=["jpg", "jpeg", "png"])
 
     if uploaded_file is not None:
-        # Save to a temporary file
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp_file:
-            tmp_file.write(uploaded_file.getbuffer())
-            image_path = tmp_file.name
+        # Save uploaded file into the 'input/' directory with original name
+        os.makedirs("input", exist_ok=True)
+        image_path = os.path.join("input", uploaded_file.name)
 
-        st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
+        with open(image_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+
+        st.image(image_path, caption="Uploaded Image", use_column_width=True)
 
         if st.button("🔍 Analyze Image for Waste"):
             with st.spinner("Analyzing image..."):
                 try:
                     # Step 1: Run preprocessing or prediction tool first
-                    run_prediction_tool(image_path)
+                    prediction = run_prediction_tool(image_path)
+
+                    if not prediction.get("success"):
+                        st.error(prediction.get("error", "❌ Unknown error during prediction."))
+                        return
+
+                    st.markdown(f"**Model Used**: {prediction['model']}")
+                    st.image(prediction["annotated_image_path"], caption="Annotated Prediction", use_column_width=True)
 
                     # Step 2: Then run image interpretation using GPT-4o
                     result = image_interpretation_tool(image_path)
-
                     st.success("✅ Waste detection complete!")
                     st.code(result, language="json")
 
