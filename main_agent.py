@@ -12,6 +12,8 @@ import subprocess
 import os
 import uuid
 import shutil
+import base64
+import requests
 
 # Third-party imports
 import streamlit as st
@@ -37,10 +39,10 @@ logger = logging.getLogger(__name__)
 # Set up the page with a title and icon
 # Using wide layout to make better use of screen space
 st.set_page_config(
-    page_title="🤖 My AI Assistant", 
+    page_title="🤖 My River Cleanup AI Vision Assistant", 
     page_icon="🤖", 
     layout="wide"
-)  # Changed from 'AI Assistant' to 'My AI Assistant' for personal touch
+)
 
 # --- Load CSS ---
 def load_css():
@@ -123,11 +125,6 @@ def create_embedding_agent():
         openai_api_version=st.secrets["AZURE_OPENAI_API_VERSION"]
     )
 
-import subprocess
-import os
-import uuid
-import shutil
-
 def run_prediction_tool(input_text: str) -> str:
     """
     Runs prediction based on user input (drone/general) and returns result with annotated image.
@@ -196,6 +193,42 @@ def run_prediction_tool(input_text: str) -> str:
     except Exception as e:
         return f"⚠️ Exception during prediction: {str(e)}"
 
+# --- Vision Agent Tool: Analyze image for waste with bounding boxes ---
+def image_interpretation_tool(input_text: str) -> str:
+    """Send image to GPT-4o vision endpoint and return JSON with bounding boxes of waste.
+    Expects input_text to be a local image path.
+    """
+    image_path = input_text.strip()
+    if not os.path.exists(image_path):
+        return f"Error: File '{image_path}' does not exist."
+
+    with open(image_path, "rb") as f:
+        image_data = base64.b64encode(f.read()).decode("utf-8")
+
+    headers = {
+        "Content-Type": "application/json",
+        "api-key": st.secrets["AZURE_OPENAI_API_KEY"]
+    }
+    endpoint = f"{st.secrets['AZURE_OPENAI_ENDPOINT']}openai/deployments/{st.secrets['AZURE_OPENAI_DEPLOYMENT_GPT4O']}/chat/completions?api-version={st.secrets['AZURE_OPENAI_API_VERSION']}"
+
+    data = {
+        "messages": [
+            {"role": "system", "content": "You are a vision model that detects waste and returns JSON bounding boxes."},
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "Detect all visible waste in this image and return their bounding boxes in JSON."},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_data}"}}
+                ]
+            }
+        ],
+        "max_tokens": 1000,
+    }
+
+    response = requests.post(endpoint, headers=headers, json=data)
+    response.raise_for_status()
+    result = response.json()
+    return result['choices'][0]['message']['content']
 
 # --- Tools: GPT Math, Python, Search, Agent Placeholders ---
 def create_tools(llm):
@@ -222,8 +255,8 @@ def create_tools(llm):
         ),
         Tool(
             name="vision_agent",
-            func=lambda x: "Vision analysis coming soon.",
-            description="Analyze images for pollution patterns or visual waste detection."
+            func=image_interpretation_tool,
+            description="Provide the local path to an image file to detect visible waste and return bounding box JSON."
         ),
         Tool(
             name="metadata_agent",
@@ -561,8 +594,8 @@ def main():
     init_session_state()
     
     # Set page title and description
-    st.title("🤖 AI Assistant")
-    st.caption("Powered by LangChain and Ollama - Your intelligent local AI assistant")
+    st.title("🤖 River Cleanup AI Vision Assistant")
+    st.caption("Powered by LangChain and OpenAI - Your intelligent local AI assistant")
     
     # Create main layout
     col1, col2 = st.columns([3, 1])
