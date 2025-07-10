@@ -27,9 +27,8 @@ This project also includes two image recognition models with separate `predict.p
 | `Images_Recog`| ⚠️ Lower        | Mixed image dataset   | 14 types       |
 
 Each model has its own `predict.py` script for inference:
-```bash
-Drone_Predict.py
-Images_General_Predict.py
+ - Drone_Predict.py
+ - Images_General_Predict.py
 
 ## Quick Start
 
