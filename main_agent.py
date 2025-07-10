@@ -8,11 +8,18 @@ import time
 import json
 import logging
 from typing import Dict, List, Any, Optional
+import subprocess
+import os
+import uuid
+import shutil
 
 # Third-party imports
 import streamlit as st
 from streamlit_chat import message as st_message
 from streamlit_extras.stylable_container import stylable_container
+st.markdown(
+    "<base href='/'>", unsafe_allow_html=True
+)
 
 # LangChain imports
 from langchain_ollama import ChatOllama
@@ -101,7 +108,7 @@ def load_css():
 def create_llm():
     """Create and configure the Azure OpenAI GPT-4o model."""
     return AzureChatOpenAI(
-        azure_endpoint=st.secrets["AZURE_OPENAI_ENDPOINT"],
+        openai_api_base=st.secrets["AZURE_OPENAI_ENDPOINT"],
         openai_api_key=st.secrets["AZURE_OPENAI_API_KEY"],
         deployment_name=st.secrets["AZURE_OPENAI_DEPLOYMENT_GPT4O"],
         openai_api_version=st.secrets["AZURE_OPENAI_API_VERSION"],
@@ -110,42 +117,85 @@ def create_llm():
 
 def create_embedding_agent():
     return AzureOpenAIEmbeddings(
-        azure_endpoint=st.secrets["AZURE_OPENAI_ENDPOINT"],
         deployment=st.secrets["AZURE_OPENAI_DEPLOYMENT_EMBEDDING"],
         openai_api_key=st.secrets["AZURE_OPENAI_API_KEY"],
+        openai_api_base=st.secrets["AZURE_OPENAI_ENDPOINT"],
         openai_api_version=st.secrets["AZURE_OPENAI_API_VERSION"]
     )
 
-# --- Vision Agent Tool: Analyze image for waste with bounding boxes ---
-def vision_agent_tool(image_path: str) -> str:
-    """Send image to GPT-4o vision endpoint and return JSON with bounding boxes of waste."""
-    with open(image_path, "rb") as f:
-        image_data = base64.b64encode(f.read()).decode("utf-8")
+import subprocess
+import os
+import uuid
+import shutil
 
-    headers = {
-        "Content-Type": "application/json",
-        "api-key": st.secrets["AZURE_OPENAI_API_KEY"]
-    }
-    endpoint = f"{st.secrets['AZURE_OPENAI_ENDPOINT']}openai/deployments/{st.secrets['AZURE_OPENAI_DEPLOYMENT_GPT4O']}/chat/completions?api-version={st.secrets['AZURE_OPENAI_API_VERSION']}"
+def run_prediction_tool(input_text: str) -> str:
+    """
+    Runs prediction based on user input (drone/general) and returns result with annotated image.
+    """
+    try:
+        # --- Parse image filename ---
+        image_name = None
+        for word in input_text.split():
+            if word.lower().endswith((".jpg", ".jpeg", ".png")):
+                image_name = word
+                break
+        if not image_name:
+            return "❌ No image file (.jpg/.jpeg/.png) found in your input."
 
-    data = {
-        "messages": [
-            {"role": "system", "content": "You are a vision model that detects waste and returns JSON bounding boxes."},
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": "Detect all visible waste in this image and return their bounding boxes in JSON."},
-                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_data}"}}
-                ]
-            }
-        ],
-        "max_tokens": 1000,
-    }
+        image_path = os.path.join("input", image_name)
+        if not os.path.exists(image_path):
+            return f"❌ File not found: {image_path}"
 
-    response = requests.post(endpoint, headers=headers, json=data)
-    response.raise_for_status()
-    result = response.json()
-    return result['choices'][0]['message']['content']
+        # --- Choose model ---
+        model_path = "Drone_Model.pt" if "drone" in input_text.lower() else "Images_Recog_Model.pt"
+        model_desc = "Drone" if "drone" in input_text.lower() else "General Image Recognition"
+
+        # --- Generate unique exp folder to avoid overwrite ---
+        output_dir = f"runs/predict/exp_{uuid.uuid4().hex[:8]}"
+        os.makedirs(output_dir, exist_ok=True)
+
+        # --- Run model ---
+        result = subprocess.run(
+            [
+                "python", "predict.py",
+                "--img_path", image_path,
+                "--model_path", model_path,
+                "--output_dir", output_dir
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60
+        )
+
+        if result.returncode != 0:
+            return f"❌ Error in prediction:\n{result.stderr.strip()}"
+
+        # --- Get output image path (assume same filename) ---
+        output_image = os.path.join(output_dir, image_name)
+        if not os.path.exists(output_image):
+            return "✅ Prediction done, but no output image found."
+
+        # --- Move image to Streamlit's static folder ---
+        static_dir = "static/annotated"
+        os.makedirs(static_dir, exist_ok=True)
+        annotated_filename = f"{uuid.uuid4().hex[:6]}_{image_name}"
+        annotated_path = os.path.join(static_dir, annotated_filename)
+        shutil.copyfile(output_image, annotated_path)
+
+        # --- Streamlit displays image with public URL ---
+        public_url = f"/static/annotated/{annotated_filename}"
+
+        # --- Return result string with image ---
+        return f"""
+    Prediction complete using **{model_desc} model**.
+
+    **Annotated Image:**
+    ![result]({public_url})
+
+"""
+    except Exception as e:
+        return f"⚠️ Exception during prediction: {str(e)}"
+
 
 # --- Tools: GPT Math, Python, Search, Agent Placeholders ---
 def create_tools(llm):
@@ -172,8 +222,8 @@ def create_tools(llm):
         ),
         Tool(
             name="vision_agent",
-            func=vision_agent_tool,
-            description="Analyze an image file to detect visible waste and return bounding box JSON."
+            func=lambda x: "Vision analysis coming soon.",
+            description="Analyze images for pollution patterns or visual waste detection."
         ),
         Tool(
             name="metadata_agent",
@@ -184,6 +234,15 @@ def create_tools(llm):
             name="transferability_agent",
             func=lambda x: "Transferability evaluator is under development.",
             description="Assess model performance generalization from River A to B."
+        ),
+        Tool(
+            name="image_predictor",
+            func=run_prediction_tool,
+            description=(
+                "Use this tool to run a visual model on an image located in the 'input/' folder. "
+                "Mention the image filename (e.g., 'river.jpg'). "
+                "If the input refers to a drone image, include the word 'drone' so the correct model is used."
+            )
         )
     ]
 
@@ -502,8 +561,8 @@ def main():
     init_session_state()
     
     # Set page title and description
-    st.title("🤖 River Cleanup AI Vision Assistant")
-    st.caption("Powered by LangChain and OpenAI - Your intelligent local AI assistant")
+    st.title("🤖 AI Assistant")
+    st.caption("Powered by LangChain and Ollama - Your intelligent local AI assistant")
     
     # Create main layout
     col1, col2 = st.columns([3, 1])
